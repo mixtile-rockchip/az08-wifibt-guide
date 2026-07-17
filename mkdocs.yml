@@ -20,6 +20,19 @@ nav:
   - Home: index.md
   - 1 · Flash device image: flashing.md
   - 2 · WiFi / BT RF test: wifibt-test.md
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: zh
+          name: 中文
+          build: true
 markdown_extensions:
   - admonition
   - pymdownx.superfences
