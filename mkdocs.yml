@@ -1,4 +1,5 @@
 site_name: AZ08 WiFi / Bluetooth Test
+site_url: https://mixtile-rockchip.github.io/az08-wifibt-guide/
 theme:
   name: material
   palette:
