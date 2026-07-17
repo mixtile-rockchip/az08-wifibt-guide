@@ -1,0 +1,27 @@
+site_name: AZ08 WiFi / Bluetooth Test
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.sections
+    - content.code.copy
+    - toc.integrate
+nav:
+  - Home: index.md
+  - 1 · Flash device image: flashing.md
+  - 2 · WiFi / BT RF test: wifibt-test.md
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - toc:
+      permalink: true
