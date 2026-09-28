@@ -10,6 +10,7 @@ WiFi / Bluetooth fixed-frequency RF test procedure for Focalcrest AZ products (A
 | Path | Content |
 |------|---------|
 | `docs/products.md` | Product table: SoC, module, test image, download link |
+| `docs/changelog.md` | Firmware changelog |
 | `docs/flashing.md` | Flashing the test image (shared) |
 | `docs/wifibt-test.md` | WiFi / Bluetooth RF test (shared) |
 | `docs/*.zh.md` | Chinese version of each page |

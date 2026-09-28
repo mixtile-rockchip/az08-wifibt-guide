@@ -20,6 +20,7 @@ theme:
 nav:
   - Home: index.md
   - Products: products.md
+  - Firmware changelog: changelog.md
   - 1 · Flash test image: flashing.md
   - 2 · WiFi / BT RF test: wifibt-test.md
 plugins:
@@ -39,6 +40,7 @@ plugins:
           nav_translations:
             Home: 首页
             Products: 产品
+            Firmware changelog: 固件变更记录
             1 · Flash test image: 1 · 烧录测试镜像
             2 · WiFi / BT RF test: 2 · WiFi / 蓝牙射频测试
 markdown_extensions:
