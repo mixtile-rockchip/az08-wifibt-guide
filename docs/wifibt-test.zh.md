@@ -374,6 +374,85 @@ wl down
 
 ```
 
+### A6. 自适应（干扰规避）
+
+WiFi 固件必须是正常版本：如果执行过 A1，先重启设备（在 PC 上执行 `adb reboot`），再重新进入 `adb shell`。
+
+测试用的路由器不要设密码。
+
+第 1 步 —— 后台如果起了热点或 `wpa_supplicant`，先关掉：
+
+```
+killall hostapd
+killall wpa_supplicant
+
+```
+
+第 2 步 —— 先关闭蓝牙：
+
+```
+cat /sys/class/rfkill/rfkill0/state
+echo 0 > /sys/class/rfkill/rfkill0/state
+
+```
+
+`cat` 查看蓝牙上电状态（`1` = 上电）；`echo 0` 关闭蓝牙（只掉电）。
+
+第 3 步 —— 起 WiFi 并确认固件：
+
+```
+ifconfig wlan0 up
+wl ver
+
+```
+
+`wl ver` 必须打印出固件版本，且**不能**包含 `WLTEST`。
+
+第 4 步 —— 设置国家码并扫描（`wl scan` 后等 10 秒再执行 `wl scanresults`）：
+
+```
+wl country DE/0
+wl scan
+wl scanresults
+
+```
+
+第 5 步 —— 连接路由器，并给设备分配与路由器同网段的 IP 地址（下面以路由器 192.168.1.1 为例）：
+
+```
+wl join <SSID>
+ifconfig wlan0 192.168.1.24
+
+```
+
+`<SSID>` 为路由器的 SSID 名称。
+
+第 6 步 —— `wl join` 后等几秒再确认连接（刚执行完 `wl join` 时，`wl status` 可能还显示 `Not associated`）：
+
+```
+wl status
+wl rssi
+ping 192.168.1.1
+ping <电脑IP>
+
+```
+
+`wl rssi` 必须在 -30 ~ -50 之间。两个 `ping` 都必须能 ping 通（按 Ctrl+C 停止）。
+
+第 7 步 —— 打流。电脑必须连在测试路由器上（与设备同一网段）。电脑端在命令提示符窗口运行（iperf 2，不能用 iperf3）：
+
+```
+iperf -s
+
+```
+
+设备端运行：
+
+```
+iperf -c <电脑IP> -i 1 -w 2m -t 6000
+
+```
+
 ---
 
 ## B 部分 —— 蓝牙
@@ -621,6 +700,7 @@ hcitool cmd 0x08 0x001f
 | 进入 WiFi 测试模式 | `wifi_ap6xxx_rftest.sh` → `wl ver` 显示 `WLTEST` |
 | 停止 WiFi TX | `wl pkteng_stop tx` 然后 `wl down` |
 | WiFi 单载波 | `wl band b` → `wl out` → `wl fqacurcy <信道>`；用 `wl fqacurcy 0` 停止（A5）|
+| WiFi 自适应 | 正常固件 → `killall wpa_supplicant` → 关蓝牙 → `wl join <SSID>` → `iperf -c <电脑IP> -i 1 -w 2m -t 6000`（A6）|
 | 准备蓝牙 | `killall bluetoothd` → `wifibt-init.sh stop` → `wifibt-init.sh start_bt` → `hciconfig hci0 up` → 检查 `hcitool cmd 0x04 0x0001` 返回 `> HCI Event` |
 | 经典蓝牙连续 TX | `hcitool cmd 0x3f 0x0051 …`（需先做 B2 DUT 模式）|
 | 经典蓝牙单音 TX | `hcitool cmd 0x3f 0x0014 …` |

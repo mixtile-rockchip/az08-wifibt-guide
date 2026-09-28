@@ -375,6 +375,85 @@ wl down
 
 ```
 
+### A6. Adaptivity (interference avoidance)
+
+The WiFi firmware must be the normal version: if A1 was run, reboot the device first (on the PC: `adb reboot`), then open `adb shell` again.
+
+The test router must have no password.
+
+Step 1 — if a hotspot or `wpa_supplicant` is running in the background, stop it:
+
+```
+killall hostapd
+killall wpa_supplicant
+
+```
+
+Step 2 — turn Bluetooth off first:
+
+```
+cat /sys/class/rfkill/rfkill0/state
+echo 0 > /sys/class/rfkill/rfkill0/state
+
+```
+
+`cat` shows the Bluetooth power state (`1` = on). `echo 0` powers Bluetooth off.
+
+Step 3 — bring WiFi up and check the firmware:
+
+```
+ifconfig wlan0 up
+wl ver
+
+```
+
+`wl ver` must print the firmware version and must **not** contain `WLTEST`.
+
+Step 4 — set the country code and scan (wait 10 seconds before `wl scanresults`):
+
+```
+wl country DE/0
+wl scan
+wl scanresults
+
+```
+
+Step 5 — join the router and give the device an IP address in the router's subnet (example below: router at 192.168.1.1):
+
+```
+wl join <SSID>
+ifconfig wlan0 192.168.1.24
+
+```
+
+`<SSID>` is the router's SSID.
+
+Step 6 — wait a few seconds after `wl join`, then check the connection (right after `wl join`, `wl status` can still show `Not associated`):
+
+```
+wl status
+wl rssi
+ping 192.168.1.1
+ping <PC IP>
+
+```
+
+`wl rssi` must be between -30 and -50. Both `ping` commands must get replies (stop each with Ctrl+C).
+
+Step 7 — run traffic. The PC must be connected to the test router (same subnet as the device). On the PC, in a Command Prompt window (iperf 2, not iperf3):
+
+```
+iperf -s
+
+```
+
+On the device:
+
+```
+iperf -c <PC IP> -i 1 -w 2m -t 6000
+
+```
+
 ---
 
 ## Part B — Bluetooth
@@ -622,6 +701,7 @@ Returns the received-packet count in the last two bytes (little-endian). `PER = 
 | Enter WiFi test mode | `wifi_ap6xxx_rftest.sh` → `wl ver` shows `WLTEST` |
 | Stop WiFi TX | `wl pkteng_stop tx` then `wl down` |
 | WiFi single tone | `wl band b` → `wl out` → `wl fqacurcy <channel>`; stop with `wl fqacurcy 0` (A5) |
+| WiFi adaptivity | normal firmware → `killall wpa_supplicant` → Bluetooth off → `wl join <SSID>` → `iperf -c <PC IP> -i 1 -w 2m -t 6000` (A6) |
 | Prepare BT | `killall bluetoothd` → `wifibt-init.sh stop` → `wifibt-init.sh start_bt` → `hciconfig hci0 up` → check `hcitool cmd 0x04 0x0001` returns `> HCI Event` |
 | Classic BT continuous TX | `hcitool cmd 0x3f 0x0051 …` (after B2 DUT mode) |
 | Classic BT single-tone TX | `hcitool cmd 0x3f 0x0014 …` |
