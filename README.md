@@ -2,8 +2,8 @@
 
 WiFi / Bluetooth fixed-frequency RF test procedure for Focalcrest AZ products (AZ04B, AZ07, AZ08) with the AP6256 module. One shared procedure; the products differ only in the test image.
 
-- Website: <https://mixtile-rockchip.github.io/az08-wifibt-guide/> (English) · [中文](https://mixtile-rockchip.github.io/az08-wifibt-guide/zh/)
-- PDF: [English](https://mixtile-rockchip.github.io/az08-wifibt-guide/pdf/Focalcrest-RF-Test-Guide-EN.pdf) · [中文](https://mixtile-rockchip.github.io/az08-wifibt-guide/pdf/Focalcrest-RF-Test-Guide-ZH.pdf)
+- Website: <https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/> (English) · [中文](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/zh/)
+- PDF: [English](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/pdf/Focalcrest-RF-Test-Guide-EN.pdf) · [中文](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/pdf/Focalcrest-RF-Test-Guide-ZH.pdf)
 
 ## Layout
 
