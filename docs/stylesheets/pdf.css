@@ -1,0 +1,32 @@
+/* Print stylesheet for the PDF build only (scripts/build_pdf.py adds it to extra_css). */
+@page {
+  size: A4;
+  margin: 16mm 14mm 18mm 14mm;
+  @bottom-right { content: counter(page) " / " counter(pages); font-size: 8pt; color: #666; }
+}
+@media print {
+  html, body, .md-typeset, h1, h2, h3, h4, h5, h6 {
+    font-family: "Noto Sans", "Noto Sans CJK SC", sans-serif !important;
+  }
+  pre, code, kbd, samp, .md-typeset code, .md-typeset pre {
+    font-family: "Noto Sans Mono CJK SC", "Noto Sans Mono", monospace !important;
+  }
+  /* Lines that fit stay on one line; only over-width lines wrap instead of being clipped. */
+  .md-typeset pre, .md-typeset pre > code, pre, pre code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  h1, h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+  /* keep a heading with at least the first two items of the list under it */
+  .md-typeset :is(h2, h3, h4) + :is(ol, ul) > li:first-child { break-after: avoid; page-break-after: avoid; }
+  /* build_pdf.py wraps labels ("2.4G 11b") and "…:" lead-ins together with the block they introduce */
+  .pdf-keep { break-inside: avoid; page-break-inside: avoid; }
+  /* Material wraps tables in a scroll box; unwrapped, the keep rules above apply to tables too */
+  .md-typeset__scrollwrap, .md-typeset__table { overflow: visible !important; margin: 0 !important; }
+  pre, .highlight, table, .md-typeset__scrollwrap, .admonition, figure, img { break-inside: avoid; page-break-inside: avoid; }
+  img { max-width: 100% !important; max-height: 235mm !important; height: auto; object-fit: contain; }
+  .md-clipboard, .headerlink, .md-source-file, .pdf-download { display: none !important; }
+}

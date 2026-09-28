@@ -1,4 +1,4 @@
-site_name: AZ08 WiFi / Bluetooth Test
+site_name: Focalcrest RF Test Guide
 site_url: https://mixtile-rockchip.github.io/az08-wifibt-guide/
 theme:
   name: material
@@ -19,7 +19,8 @@ theme:
     - toc.integrate
 nav:
   - Home: index.md
-  - 1 · Flash device image: flashing.md
+  - Products: products.md
+  - 1 · Flash test image: flashing.md
   - 2 · WiFi / BT RF test: wifibt-test.md
 plugins:
   - search
@@ -34,8 +35,20 @@ plugins:
         - locale: zh
           name: 中文
           build: true
+          site_name: Focalcrest 射频测试指南
+          nav_translations:
+            Home: 首页
+            Products: 产品
+            1 · Flash test image: 1 · 烧录测试镜像
+            2 · WiFi / BT RF test: 2 · WiFi / 蓝牙射频测试
 markdown_extensions:
   - admonition
   - pymdownx.superfences
   - toc:
       permalink: true
+      slugify: !!python/name:markdown.extensions.toc.slugify_unicode
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn

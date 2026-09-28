@@ -1,6 +1,6 @@
 # 设备镜像烧录指南（Windows）
 
-请先烧录 AZ08 固件镜像。**只有烧录成功后**，才开始 WiFi/蓝牙测试（另见测试指南）。
+请先烧录对应产品的测试镜像。**只有烧录成功后**，才开始 WiFi/蓝牙测试（另见测试指南）。
 
 在 **Windows PC** 上操作。
 
@@ -11,7 +11,7 @@
 - 一台带 USB 口的 Windows PC
 - 一根从 PC 连到设备烧录口的 USB 线
 - Rockchip Flash Tool（Windows 版）—— 见步骤 1
-- AZ08 镜像 —— 见步骤 2
+- 对应产品的测试镜像 —— 见步骤 2
 
 ---
 
@@ -22,10 +22,10 @@
 3. 解压到一个文件夹（例如 `C:\Rockchip-Flash-Tool`）。
 4. 从该文件夹运行程序（`Rockchip Flash Tool.exe`）。
 
-## 2. 下载设备镜像
+## 2. 下载测试镜像
 
-1. 用浏览器打开：<https://mixtile-rockchip.github.io/focalcrest-rockchip-linux-ci/#/AZ08/latest>
-2. 下载最新的 AZ08 镜像并保存到 PC（记住保存位置）。
+1. 在 [产品](products.md) 表格中，打开对应产品的下载链接。
+2. 把 `.img` 文件保存到 PC（记住保存位置）。
 
 ## 3. 让设备进入烧录模式
 
@@ -54,9 +54,11 @@
 2. 解压到一个文件夹，例如 `C:\platform-tools`。
 3. 在该文件夹打开 **命令提示符**（或 PowerShell）—— 在文件资源管理器地址栏输入 `cmd` 回车即可。
 4. 用 USB 连接（已烧录并启动的）设备，然后执行：
+
 ```
 adb devices
 ```
+
 必须恰好列出一台设备且状态为 `device`。若显示 `unauthorized` 或没有设备，重新插拔 USB 线再执行一次。
 
 ---

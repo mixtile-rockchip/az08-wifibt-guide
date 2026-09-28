@@ -1,6 +1,6 @@
 # Device Image Flashing Guide (Windows)
 
-Flash the AZ08 firmware image first. **Only after flashing succeeds** do the WiFi/Bluetooth test (separate guide).
+Flash the test image for your product first. **Only after flashing succeeds** do the WiFi/Bluetooth test (separate guide).
 
 Operated from a **Windows PC**.
 
@@ -11,7 +11,7 @@ Operated from a **Windows PC**.
 - A Windows PC with a USB port
 - A USB cable from the PC to the device's flashing port
 - Rockchip Flash Tool (Windows) — see step 1
-- The AZ08 image — see step 2
+- The test image for your product — see step 2
 
 ---
 
@@ -22,14 +22,15 @@ Operated from a **Windows PC**.
 3. Unzip it to a folder (e.g. `C:\Rockchip-Flash-Tool`).
 4. Run the application (`Rockchip Flash Tool.exe`) from that folder.
 
-## 2. Download the device image
+## 2. Download the test image
 
-1. Open in a browser: <https://mixtile-rockchip.github.io/focalcrest-rockchip-linux-ci/#/AZ08/latest>
-2. Download the latest AZ08 image and save it to your PC (remember the file location).
+1. In the [Products](products.md) table, open the download link for your product.
+2. Save the `.img` file to your PC (remember the file location).
 
 ## 3. Put the device into flashing mode
 
 Put the device into **Maskrom** or **Loader** mode, then connect it to the PC by USB:
+
 - Typically: hold the **Maskrom / recovery** button while plugging the USB cable into the PC, then release.
 - If the device already boots normally and ADB is set up (step 5), you can instead run `adb reboot loader`.
 
@@ -53,9 +54,11 @@ The Rockchip Flash Tool should now show the connected device.
 2. Unzip to a folder, e.g. `C:\platform-tools`.
 3. Open **Command Prompt** (or PowerShell) in that folder — in File Explorer, type `cmd` in the address bar and press Enter.
 4. Connect the (flashed, booted) device to the PC by USB, then run:
+
 ```
 adb devices
 ```
+
 Exactly one device must be listed as `device`. If it shows `unauthorized` or nothing, reconnect the cable and run it again.
 
 ---
