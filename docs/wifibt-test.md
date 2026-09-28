@@ -302,6 +302,57 @@ wl reset_cnts
 
 ```
 
+### A5. Single tone (unmodulated carrier)
+
+One channel at a time, no packets. The tone lands on the channel centre frequency.
+
+```
+wl down
+wl mpc 0
+wl country ALL
+wl up
+wl scansuppress 1
+wl phy_watchdog 0
+wl band b
+wl phy_forcecal 1
+wl phy_txpwrctrl 0
+wl phy_txpwrindex 90
+wl out
+wl fqacurcy 11
+
+```
+
+Confirm the channel took — `current mac channel` must equal the channel you passed to `wl fqacurcy`:
+```
+wl channel
+
+```
+
+Parameter changes:
+- Band: `wl band b` = 2.4G, `wl band a` = 5G. Set the band **before** `wl out`.
+- Channel: the argument to `wl fqacurcy` — pick from the table below. `wl fqacurcy` does **not** validate it: out-of-range values such as `14` or `200` are accepted silently and produce no valid tone.
+- Power: `wl phy_txpwrindex <0–127>` — a PHY gain-table index, **not** a dBm value. Values above 127 wrap to negative and are accepted silently.
+- Everything up to and including `wl phy_txpwrindex` must be set **before** `wl out`. In the `out` state `wl phy_txpwrindex` and `wl phy_forcecal` both return `wl: Not up`.
+
+| Band | Channels |
+|------|----------|
+| 2.4G (2400–2483) | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 |
+| 5G band 1 (5150–5250) | 36, 40, 44, 48 |
+| 5G band 2 (5250–5350) | 52, 56, 60, 64 |
+| 5G band 3 (5475–5725) | 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 |
+| 5G band 4 (5725–5850) | 149, 153, 157, 161, 165 |
+
+Other channels in the same band can be set by repeating `wl fqacurcy <channel>` — no need to leave the `out` state. To change band, run the whole block again.
+
+Stop:
+```
+wl fqacurcy 0
+wl up
+wl phy_txpwrctrl 1
+wl down
+
+```
+
 ---
 
 ## Part B — Bluetooth
@@ -516,6 +567,7 @@ Returns the received-packet count in the last two bytes (little-endian). `PER = 
 |------|---------|
 | Enter WiFi test mode | `wifi_ap6xxx_rftest.sh` → `wl ver` shows `WLTEST` |
 | Stop WiFi TX | `wl pkteng_stop tx` then `wl down` |
+| WiFi single tone | `wl band b` → `wl out` → `wl fqacurcy <channel>`; stop with `wl fqacurcy 0` (A5) |
 | Prepare BT | `killall bluetoothd` → `wifibt-init.sh stop` → `wifibt-init.sh start_bt` → `hciconfig hci0 up` → check `hcitool cmd 0x04 0x0001` returns `> HCI Event` |
 | Classic BT continuous TX | `hcitool cmd 0x3f 0x0051 …` (after B2 DUT mode) |
 | Classic BT single-tone TX | `hcitool cmd 0x3f 0x0014 …` |

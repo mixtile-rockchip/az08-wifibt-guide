@@ -301,6 +301,57 @@ wl reset_cnts
 
 ```
 
+### A5. 单载波（未调制载波）
+
+一次一个信道，不发包。载波落在信道中心频点上。
+
+```
+wl down
+wl mpc 0
+wl country ALL
+wl up
+wl scansuppress 1
+wl phy_watchdog 0
+wl band b
+wl phy_forcecal 1
+wl phy_txpwrctrl 0
+wl phy_txpwrindex 90
+wl out
+wl fqacurcy 11
+
+```
+
+确认信道已生效 —— `current mac channel` 必须等于传给 `wl fqacurcy` 的信道号：
+```
+wl channel
+
+```
+
+参数修改：
+- 频段：`wl band b` = 2.4G，`wl band a` = 5G。频段必须在 `wl out` **之前**设置。
+- 信道：即 `wl fqacurcy` 的参数，从下表中选取。`wl fqacurcy` **不校验**该参数：`14`、`200` 这类超范围的值同样会被接受且不报错，但产生不出有效载波。
+- 功率：`wl phy_txpwrindex <0–127>` —— 这是 PHY 增益表索引，**不是** dBm 值。超过 127 的值会翻转为负数且不报错。
+- `wl phy_txpwrindex` 及其之前的所有命令都必须在 `wl out` **之前**执行。进入 `out` 状态后，`wl phy_txpwrindex` 和 `wl phy_forcecal` 都会返回 `wl: Not up`。
+
+| 频段 | 信道 |
+|------|------|
+| 2.4G (2400–2483) | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 |
+| 5G band 1 (5150–5250) | 36, 40, 44, 48 |
+| 5G band 2 (5250–5350) | 52, 56, 60, 64 |
+| 5G band 3 (5475–5725) | 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144 |
+| 5G band 4 (5725–5850) | 149, 153, 157, 161, 165 |
+
+同频段内换信道，重复执行 `wl fqacurcy <信道>` 即可，无需退出 `out` 状态。换频段则需要整段重新执行。
+
+停止：
+```
+wl fqacurcy 0
+wl up
+wl phy_txpwrctrl 1
+wl down
+
+```
+
 ---
 
 ## B 部分 —— 蓝牙
@@ -515,6 +566,7 @@ hcitool cmd 0x08 0x001f
 |------|------|
 | 进入 WiFi 测试模式 | `wifi_ap6xxx_rftest.sh` → `wl ver` 显示 `WLTEST` |
 | 停止 WiFi TX | `wl pkteng_stop tx` 然后 `wl down` |
+| WiFi 单载波 | `wl band b` → `wl out` → `wl fqacurcy <信道>`；用 `wl fqacurcy 0` 停止（A5）|
 | 准备蓝牙 | `killall bluetoothd` → `wifibt-init.sh stop` → `wifibt-init.sh start_bt` → `hciconfig hci0 up` → 检查 `hcitool cmd 0x04 0x0001` 返回 `> HCI Event` |
 | 经典蓝牙连续 TX | `hcitool cmd 0x3f 0x0051 …`（需先做 B2 DUT 模式）|
 | 经典蓝牙单音 TX | `hcitool cmd 0x3f 0x0014 …` |
