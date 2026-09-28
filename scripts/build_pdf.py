@@ -5,8 +5,9 @@ mkdocs-static-i18n builds every language in one run, and print-site then emits
 a single /print_page/ for all of them, so each language gets its own build here:
 that language as the only (default) one, print-site added, screen-only theme
 features dropped. The print page is served locally and printed with headless
-Chromium to <out>/<name>-<LANG>.pdf. A JSON manifest describing what the page
-contains is written next to each build for scripts/check_pdf.py.
+Chromium to <out>/<name>-<LANG>.pdf, followed by the BT RF Test Commands manual
+as an appendix. A JSON manifest describing what the PDF contains is written
+next to each build for scripts/check_pdf.py.
 """
 import argparse, functools, http.server, json, os, subprocess, sys, threading
 from pathlib import Path
@@ -21,6 +22,14 @@ BUILD = ROOT / "build"
 # toc.integrate removes the secondary sidebar that print-site copies its TOC from.
 SCREEN_ONLY_FEATURES = {"toc.integrate", "content.code.copy"}
 TOC_TITLES = {"en": "Contents", "zh": "目录"}
+# Vendor manual appended after the guide; links to it jump to the appendix instead.
+APPENDIX_PDF = ROOT / "docs" / "assets" / "BT-RF-Test-Commands-for-Linux-v0.9.pdf"
+APPENDIX = {
+    "en": ("Appendix · BT RF Test Commands for Linux (v0.9)",
+           "Ampak / Cypress Bluetooth RF test command reference (v0.9). The full manual follows."),
+    "zh": ("附录 · BT RF Test Commands for Linux (v0.9)",
+           "Ampak / Cypress 蓝牙射频测试命令参考手册（v0.9）。完整手册见后续页面。"),
+}
 # A4 width minus the left/right @page margins in pdf.css (14 mm each), in CSS px.
 PRINT_WIDTH_PX = round((210 - 2 * 14) / 25.4 * 96)
 
@@ -67,6 +76,33 @@ KEEP_JS = """() => {
     p.before(keep);
     keep.append(p, next);
   }
+}"""
+
+# Divider page for the appendix, listed in the TOC; links to the manual point at it.
+APPENDIX_JS = """([title, text, file]) => {
+  const section = document.createElement('section');
+  section.className = 'print-page pdf-appendix';
+  section.id = 'appendix';
+  const h1 = document.createElement('h1');
+  h1.id = 'appendix-title';
+  h1.textContent = title;
+  const p = document.createElement('p');
+  p.textContent = text;
+  section.append(h1, p);
+  [...document.querySelectorAll('section.print-page')].pop().after(section);
+  const toc = document.querySelector('#print-page-toc ul');
+  if (toc) {
+    const li = document.createElement('li');
+    li.className = 'md-nav__item';
+    const a = document.createElement('a');
+    a.className = 'md-nav__link';
+    a.href = '#appendix';
+    a.textContent = title;
+    li.append(a);
+    toc.append(li);
+  }
+  for (const a of document.querySelectorAll('a[href]'))
+    if (new URL(a.href, location.href).pathname.endsWith('/' + file)) a.setAttribute('href', '#appendix');
 }"""
 
 # Rendered links that leave the print page (other pages, assets), as local paths.
@@ -152,9 +188,11 @@ def public_urls(base, lang, paths, site_dir):
     return mapping
 
 
-def dedupe_outline(pdf):
-    """Chromium repeats the text of h1 bookmarks ("TitleTitle"); keep one copy."""
+def finish_pdf(pdf, appendix):
+    """Fix bookmark titles, then append the appendix PDF. Returns the guide's page count."""
     writer = PdfWriter(clone_from=str(pdf))
+    guide_pages = len(writer.pages)
+    # Chromium repeats the text of h1 bookmarks ("TitleTitle"); keep one copy.
     outlines = writer.root_object.get("/Outlines")
     stack = [outlines.get_object().get("/First")] if outlines else []
     while stack:
@@ -167,10 +205,12 @@ def dedupe_outline(pdf):
         if len(title) % 2 == 0 and half and title[:half] == title[half:]:
             node[NameObject("/Title")] = TextStringObject(title[:half])
         stack += [node.get("/First"), node.get("/Next")]
+    writer.append(str(appendix), import_outline=False)
     writer.write(str(pdf))
+    return guide_pages
 
 
-def render(site_dir, out_pdf, public, chromium=None):
+def render(site_dir, out_pdf, public, appendix, chromium=None):
     handler = functools.partial(QuietHandler, directory=str(site_dir))
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -183,6 +223,7 @@ def render(site_dir, out_pdf, public, chromium=None):
             page.emulate_media(media="print")
             page.wait_for_function("document.fonts.status === 'loaded'")
             page.evaluate(KEEP_JS)
+            page.evaluate(APPENDIX_JS, [*appendix, APPENDIX_PDF.name])
             manifest = page.evaluate(COLLECT_JS)
             page.evaluate(REWRITE_JS, public(page.evaluate(LOCAL_LINKS_JS)))
             page.pdf(path=str(out_pdf), format="A4", print_background=True,
@@ -216,9 +257,10 @@ def main():
         subprocess.run(["mkdocs", "build", "--strict", "-q", "-f", str(cfg_path), "-d", str(site_dir)], check=True)
         pdf = out / f"{a.name}-{lang.upper()}.pdf"
         public = functools.partial(public_urls, base_cfg, lang, site_dir=ROOT / "site")
-        manifest = render(site_dir, pdf, public, os.environ.get("CHROMIUM_EXE") or None)
-        dedupe_outline(pdf)
+        manifest = render(site_dir, pdf, public, APPENDIX[lang], os.environ.get("CHROMIUM_EXE") or None)
+        guide_pages = finish_pdf(pdf, APPENDIX_PDF)
         manifest.update(lang=lang, pdf=str(pdf), toc_title=TOC_TITLES.get(lang, "Contents"),
+                        guide_pages=guide_pages, appendix_pdf=str(APPENDIX_PDF), appendix_title=APPENDIX[lang][0],
                         site_url=load_base(base_cfg)["site_url"].rstrip("/") + "/")
         (BUILD / f"pdf-{lang}.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1))
         print(f"{pdf.relative_to(ROOT)}  {pdf.stat().st_size // 1024} KiB")

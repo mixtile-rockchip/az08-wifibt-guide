@@ -2,7 +2,9 @@
 """Quality gate for the PDFs written by scripts/build_pdf.py.
 
 Checks each build/pdf-<lang>.json manifest against its PDF and exits non-zero
-on any failure. Needs poppler-utils (pdffonts, pdftotext, pdfimages) and pypdf.
+on any failure. The typesetting checks cover the guide pages; the appended
+vendor manual is only checked to be complete and reachable.
+Needs poppler-utils (pdffonts, pdftotext, pdfimages) and pypdf.
 """
 import json, os, re, subprocess, sys
 from pathlib import Path
@@ -42,14 +44,15 @@ def check(manifest):
     fails = []
     fail = fails.append
     reader = PdfReader(pdf)
-    pages = [run("pdftotext", "-layout", "-f", str(i), "-l", str(i), pdf, "-") for i in range(1, len(reader.pages) + 1)]
+    guide = manifest["guide_pages"]
+    pages = [run("pdftotext", "-layout", "-f", str(i), "-l", str(i), pdf, "-") for i in range(1, guide + 1)]
     text = "\n".join(pages)
     lines = [norm(l) for l in text.splitlines()]
     flat = re.sub(r"\s+", "", text)
 
     # fonts: every font embedded and a Noto family; the Chinese PDF must carry Noto Sans CJK
     fonts, unembedded = set(), set()
-    for row in run("pdffonts", pdf).splitlines()[2:]:
+    for row in run("pdffonts", "-l", str(guide), pdf).splitlines()[2:]:
         cols = row.split()
         fonts.add(cols[0].split("+", 1)[-1])
         if cols[-5] != "yes":
@@ -102,7 +105,8 @@ def check(manifest):
             fail(f"bookmark title doubled: {t}")
 
     # links: internal ones jump to a real page, none point at the local build server
-    internal = 0
+    internal = appendix_links = 0
+    manual = Path(manifest["appendix_pdf"]).name
     for page in reader.pages:
         for annot in page.get("/Annots") or []:
             a = annot.get_object()
@@ -111,6 +115,8 @@ def check(manifest):
             action = a.get("/A")
             uri = action.get_object().get("/URI") if action else None
             if uri is not None:
+                if str(uri).endswith(manual):
+                    fail(f"link to the manual leaves the PDF instead of jumping to the appendix: {uri}")
                 if re.search(r"127\.0\.0\.1|localhost|file:", str(uri)):
                     fail(f"link to the local build: {uri}")
                 elif str(uri).startswith(manifest["site_url"]):
@@ -127,6 +133,8 @@ def check(manifest):
                 target = reader.named_destinations.get(str(dest)) if not isinstance(dest, list) else dest
                 if target is None:
                     fail(f"internal link to unknown destination {dest}")
+                elif reader.get_destination_page_number(target) + 1 == manifest["guide_pages"]:
+                    appendix_links += 1
             except Exception as e:  # noqa: BLE001
                 fail(f"cannot resolve internal link {dest}: {e}")
     if internal < manifest["internal_links"]:
@@ -138,7 +146,7 @@ def check(manifest):
             fail(f"image not loaded: {img['src']}")
         if img["width"] > img["box"] + 1:
             fail(f"image wider than the page: {img['src']}")
-    embedded = len(run("pdfimages", "-list", pdf).splitlines()[2:])
+    embedded = len(run("pdfimages", "-list", "-l", str(guide), pdf).splitlines()[2:])
     if embedded < len(manifest["images"]):
         fail(f"{embedded} images in PDF, {len(manifest['images'])} in HTML")
 
@@ -194,13 +202,32 @@ def check(manifest):
         elif body[-1].endswith((":", "：")):
             fail(f"lead-in separated from what it introduces, page {i}: {body[-1]}")
 
+    # appendix: every page of the manual, unchanged, after the guide, reachable from TOC, bookmark and link
+    source = PdfReader(manifest["appendix_pdf"])
+    if len(reader.pages) != guide + len(source.pages):
+        fail(f"{len(reader.pages)} pages, expected {guide} guide + {len(source.pages)} appendix")
+    else:
+        for i in range(len(source.pages)):
+            got = run("pdftotext", "-f", str(guide + i + 1), "-l", str(guide + i + 1), pdf, "-")
+            want = run("pdftotext", "-f", str(i + 1), "-l", str(i + 1), manifest["appendix_pdf"], "-")
+            if norm(got) != norm(want):
+                fail(f"appendix page {i + 1} differs from {Path(manifest['appendix_pdf']).name}")
+    title = norm(manifest["appendix_title"])
+    divider = [reader.get_destination_page_number(o) + 1 for o in outline if norm(o.title) == title]
+    if divider != [guide]:
+        fail(f"appendix bookmark {title!r} on page(s) {divider}, expected page {guide}")
+    if title not in norm(pages[-1]):
+        fail("appendix divider is not the last guide page")
+    if appendix_links == 0:
+        fail("no link jumps to the appendix")
+
     # Chinese line breaking
     if lang == "zh":
         for l in lines:
             if l and l[0] in NO_LINE_START:
                 fail(f"line starts with closing punctuation: {l[:40]}")
 
-    summary = (f"{Path(pdf).name}: {len(reader.pages)} pages, fonts {sorted(fonts)}, "
+    summary = (f"{Path(pdf).name}: {guide} + {len(reader.pages) - guide} appendix pages, fonts {sorted(fonts)}, "
                f"{len(outline)} bookmarks, {internal} internal links, {len(manifest['images'])} images, "
                f"{sum(len(b['lines']) for b in manifest['code'])} code lines, {len(manifest['admonitions'])} admonitions")
     return summary, fails

@@ -1,6 +1,6 @@
 # Focalcrest RF Test Guide
 
-WiFi / Bluetooth fixed-frequency RF test procedure for Focalcrest AZ products (AZ04B, AZ07, AZ08) with the AP6256 module. One shared procedure; the products differ only in the test image.
+WiFi / Bluetooth fixed-frequency RF test procedure for Focalcrest AZ products (AZ07, AZ08) with the AP6256 module. One shared procedure; the products differ only in the test image.
 
 - Website: <https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/> (English) · [中文](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/zh/)
 - PDF: [English](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/pdf/Focalcrest-RF-Test-Guide-EN.pdf) · [中文](https://mixtile-rockchip.github.io/focalcrest-rf-test-guide/pdf/Focalcrest-RF-Test-Guide-ZH.pdf)
@@ -29,5 +29,7 @@ mkdocs build --strict
 python scripts/build_pdf.py
 python scripts/check_pdf.py
 ```
+
+Both PDFs end with `docs/assets/BT-RF-Test-Commands-for-Linux-v0.9.pdf` as an appendix; links to that manual jump to it.
 
 The PDF build needs the Noto Sans CJK SC fonts (`fonts-noto-cjk` on Debian/Ubuntu) and poppler-utils; `check_pdf.py` fails if any other font ends up in a PDF.

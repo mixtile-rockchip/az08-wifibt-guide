@@ -24,6 +24,7 @@
   .md-typeset :is(h2, h3, h4) + :is(ol, ul) > li:first-child { break-after: avoid; page-break-after: avoid; }
   /* build_pdf.py wraps labels ("2.4G 11b") and "…:" lead-ins together with the block they introduce */
   .pdf-keep { break-inside: avoid; page-break-inside: avoid; }
+  .pdf-appendix { break-before: page; page-break-before: always; }
   /* Material wraps tables in a scroll box; unwrapped, the keep rules above apply to tables too */
   .md-typeset__scrollwrap, .md-typeset__table { overflow: visible !important; margin: 0 !important; }
   pre, .highlight, table, .md-typeset__scrollwrap, .admonition, figure, img { break-inside: avoid; page-break-inside: avoid; }
